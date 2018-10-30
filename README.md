@@ -9,7 +9,7 @@ The example offers a best-practice solution how to separate model, view and logi
 A clean component architecture and data-flow helps to keep create readable code, avoids bugs and makes maintenance or refactoring easy.
 
 You can also find a comprehensive guide about this topic here:
-https://v-play.net/doc/internal/master/apps-howto-model-view-separation/
+https://v-play.net/doc/apps-howto-model-view-separation/
 
 For more information about creating Apps with V-Play Engine, see here:
 http://v-play.net/apps/.
