@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/">
+        <file>qml</file>
+        <file>qml/pages</file>
+        <file>qml/model</file>
+    </qresource>
+</RCC>
