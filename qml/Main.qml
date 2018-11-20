@@ -27,8 +27,16 @@ App {
     id: logic
   }
 
+  // Logging (Console)
+  ConsoleLogger {
+    dispatcher: logic
+    model: dataModel
+    currentPage: stack.currentPage
+  }
+
   // view
   NavigationStack {
+    id: stack
     initialPage: TodoListPage { }
   }
 
