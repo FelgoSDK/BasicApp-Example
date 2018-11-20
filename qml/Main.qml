@@ -30,7 +30,10 @@ App {
   // Logging (Console)
   ConsoleLogger {
     dispatcher: logic
+    logicLogging: true // set false to disable logging for logic actions
+
     model: dataModel
+    modelLogging: true // set false to disable logging signals model signals
     currentPage: stack.currentPage
   }
 

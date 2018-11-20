@@ -11,6 +11,12 @@ Item {
   // property to hold current page of app, this is useful to track where the user triggered an action
   property var currentPage
 
+  // property to disable logging for logic actions
+  property alias logicLogging: logicConnection.enabled
+
+  // property to disable logging for model signals
+  property alias modelLogging: modelConnection.enabled
+
   // listen dispatcher signals (to log user actions)
   Connections {
     id: logicConnection
