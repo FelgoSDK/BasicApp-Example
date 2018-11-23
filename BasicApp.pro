@@ -6,7 +6,7 @@ CONFIG += v-play
 #CONFIG += v-play-live
 
 # configure the bundle identifier for iOS
-PRODUCT_IDENTIFIER = net.vplay.demos.ModelViewSeparation
+PRODUCT_IDENTIFIER = net.vplay.demos.BasicApp
 
 qmlFolder.source = qml
 DEPLOYMENTFOLDERS += qmlFolder # comment for publishing

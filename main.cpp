@@ -3,6 +3,9 @@
 
 #include <QQmlApplicationEngine>
 
+// uncomment this line to add the Live Client Module and use live reloading with your custom C++ code
+//#include <VPLiveClient>
+
 
 int main(int argc, char *argv[])
 {
@@ -26,6 +29,10 @@ int main(int argc, char *argv[])
   // vplay.setMainQmlFileName(QStringLiteral("qrc:/qml/Main.qml"));
 
   engine.load(QUrl(vplay.mainQmlFileName()));
+
+  // to start your project as Live Client, comment (remove) the lines "vplay.setMainQmlFileName ..." & "engine.load ...",
+  // and uncomment the line below
+  //VPlayLiveClient client (&engine);
 
   return app.exec();
 }

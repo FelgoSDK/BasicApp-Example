@@ -6,19 +6,23 @@ Item {
   // property to configure target dispatcher / logic
   property alias dispatcher: logicConnection.target
 
-  // whether api is busy
-  readonly property bool busy: api.busy
+  // whether api is busy (ongoing network requests)
+  readonly property bool isBusy: api.busy
+
+  // whether a user is logged in
+  readonly property bool userLoggedIn: _.userLoggedIn
 
   // model data properties
   readonly property alias todos: _.todos
   readonly property alias todoDetails: _.todoDetails
-  readonly property alias draftTodos: _.draftTodos
 
-  // signals
+  // action success signals
+  signal todoStored(var todo)
+
+  // action error signals
   signal fetchTodosFailed(var error)
-  signal fetchTodoDetailsFailed(int id,var error)
-  signal storeDraftTodoFailed(var todo, var error)
-  signal todoStored(int draftId, int todoId)
+  signal fetchTodoDetailsFailed(int id, var error)
+  signal storeTodoFailed(var todo, var error)
 
   // listen to actions from dispatcher
   Connections {
@@ -47,16 +51,6 @@ Item {
 
     // action 2 - fetchTodoDetails
     onFetchTodoDetails: {
-      // fetch from drafts if id < 0
-      if(id < 0) {
-        _.draftTodos.forEach(function(item) {
-          if(item.id === id) {
-            _.todoDetails[id] = item
-          }
-        })
-        return
-      }
-
       // check cached todo details first
       var cached = cache.getValue("todo_"+id)
       if(cached) {
@@ -80,75 +74,46 @@ Item {
                       })
     }
 
-    // action 3 - fetchDraftTodos
-    onFetchDraftTodos: {
-      // check cached value first
-      var cached = cache.getValue("draftTodos")
-      if(cached)
-        _.draftTodos = cached
-
-      // drafts are not stored with api, only locally in cache
-    }
-
-    // action 4 - createDraftTodo
-    onCreateDraftTodo: {
-      // add to draft todos
-      var tempTodo = JSON.parse(JSON.stringify(todo)) // copy object
-      var latestDraftNr = _.draftTodos.length > 0 ? _.draftTodos[0].id : 0
-      tempTodo["id"] = latestDraftNr - 1 // negative id means its a draft
-      _.draftTodos.unshift(tempTodo) // add to top of draft list
-
-      // cache draft todos
-      cache.setValue("draftTodos", _.draftTodos)
-      draftTodosChanged()
-
-      // drafts are not stored with api, only locally
-    }
-
-    // action 5 - storeDraftTodo
-    onStoreDraftTodo: {
-      // copy draft and delete id (is set by api)
-      var newTodo = JSON.parse(JSON.stringify(todo)) // copy
-      delete newTodo["id"]
-
+    // action 3 - storeTodo
+    onStoreTodo: {
       // store with api
-      api.addTodo(newTodo,
+      api.addTodo(todo,
                   function(data) {
+                    // NOTE: Dummy REST API always returns 201 as id of new todo
+                    // To simulate a new todo, we set correct local id based on current model
+                    data.id = _.todos.length + 1
+
                     // cache newly added item details
                     cache.setValue("todo_"+data.id, data)
-
-                    // remove draft item
-                    for(var i=0; i < _.draftTodos.length; i++) {
-                      if(_.draftTodos[i].id === todo.id) {
-                        _.draftTodos.splice(i, 1)
-                      }
-                    }
 
                     // add new item to todos
                     _.todos.unshift(data)
 
-                    // cache updated todo list and drafts
-                    cache.setValue("draftTodos", _.draftTodos)
+                    // cache updated todo list
                     cache.setValue("todos", _.todos)
-                    draftTodosChanged()
                     todosChanged()
 
-                    todoStored(todo.id, data.id)
+                    todoStored(data)
                   },
                   function(error) {
-                    storeDraftTodoFailed(todo, error)
+                    storeTodoFailed(todo, error)
                   })
     }
 
-    // action 6 - clearCache
+    // action 4 - clearCache
     onClearCache: {
-      // only clear todos and details, not drafts
-      cache.clearValue("todos")
-      _.todoDetails.forEach(function(item) {
-        cache.clearValue("todo_"+item.id)
-      })
+      cache.clearAll()
     }
+
+    // action 5 - login
+    onLogin: _.userLoggedIn = true
+
+    // action 6 - logout
+    onLogout: _.userLoggedIn = false
   }
+
+  // you can place getter functions here that do not modify the data
+  // pages trigger write operations through logic signals only
 
   // rest api for data access
   RestAPI {
@@ -165,8 +130,12 @@ Item {
   Item {
     id: _
 
-    property var todos: []
-    property var todoDetails: []
-    property var draftTodos: []
+    // data properties
+    property var todos: []  // Array
+    property var todoDetails: ({}) // Map
+
+    // auth
+    property bool userLoggedIn: false
+
   }
 }

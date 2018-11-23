@@ -3,22 +3,13 @@ import QtQuick 2.0
 
 Page {
   id: page
+  title: viewHelper.formatTitle(todoData)
 
-  title: qsTr("Details")
-  rightBarItem: NavigationBarRow {
-    // network activity indicator
-    ActivityIndicatorBarItem {
-      enabled: dataModel.busy
-      visible: enabled
-      showItem: showItemAlways
-    }
-
-    // add new todo
-    IconButtonBarItem {
-      icon: IconType.save
-      visible: !!todoData && todoData.id < 0
-      onClicked: logic.storeDraftTodo(todoData)
-    }
+  // network activity indicator
+  rightBarItem: ActivityIndicatorBarItem {
+    id: activityBarItem
+    visible: dataModel.isBusy && !dataModel.isStoringTodos
+    showItem: showItemAlways // do not collapse into sub-menu on Android
   }
 
   // target id
@@ -32,45 +23,41 @@ Page {
     logic.fetchTodoDetails(todoId)
   }
 
-  // update todo id when stored
-  Connections {
-    target: dataModel
-    onTodoStored: {
-      if(page.todoId === draftId)
-        page.todoId = todoId
-    }
-  }
-
-  // show all todo object properties in a column, if data is available
+  // column to show all todo object properties, if data is available
   Column {
-    y: dp(Theme.navigationBar.defaultBarItemPadding)
-    width: parent.width
-    visible: !!todoData
+    y: spacing
+    width: parent.width - 2 * spacing
+    anchors.horizontalCenter: parent.horizontalCenter
+    spacing: dp(Theme.navigationBar.defaultBarItemPadding)
+    visible: !noDataMessage.visible
 
+    // Repeater creates copies of given item based on configured model data
     Repeater {
       enabled: parent.visible
-      model: visible ? Object.keys(todoData) : null
+      model: !!todoData ? Object.keys(todoData) : undefined
+
+      // Text Item to show each property - value pair
       AppText {
-        width: parent.width - 2 * dp(Theme.navigationBar.defaultBarItemPadding)
+        property string propName: modelData
+        property string value: todoData[propName]
+
+        width: parent.width
         anchors.horizontalCenter: parent.horizontalCenter
         height: implicitHeight
-        text: "<strong>"+modelData+":</strong> "+todoData[modelData]
+
+        text: "<strong>"+propName+":</strong> "+value
         wrapMode: AppText.WrapAtWordBoundaryOrAnywhere
       }
     }
   }
 
-  // show message if data is loading
-  AppText {
-    text: "Loading todo data..."
-    anchors.centerIn: parent
-    visible: !todoData && dataModel.busy
-  }
-
   // show message if data not available
   AppText {
-    text: "Todo data not available."
-    anchors.centerIn: parent
-    visible: !todoData && !dataModel.busy
+    id: noDataMessage
+    anchors.verticalCenter: parent.verticalCenter
+    text: qsTr("Todo data not available. Please check your internet connection.")
+    width: parent.width
+    horizontalAlignment: Qt.AlignHCenter
+    visible: !todoData && !dataModel.isBusy
   }
 }

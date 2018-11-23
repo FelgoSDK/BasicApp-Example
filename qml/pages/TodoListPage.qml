@@ -1,39 +1,64 @@
 import VPlayApps 1.0
 import QtQuick 2.0
 
-ListPage {
+Page {
   id: page
-  title: qsTr("Todos")
+  title: qsTr("Todo List") // use qsTr for strings you want to translate
+
   rightBarItem: NavigationBarRow {
     // network activity indicator
     ActivityIndicatorBarItem {
-      enabled: dataModel.busy
+      enabled: dataModel.isBusy
       visible: enabled
-      showItem: showItemAlways
+      showItem: showItemAlways // do not collapse into sub-menu on Android
     }
 
     // add new todo
     IconButtonBarItem {
       icon: IconType.plus
+      showItem: showItemAlways
       onClicked: {
-        var draft = {
-          completed: false,
-          title: "New Todo",
-          userId: 1,
-        }
-        logic.createAndStoreDraftTodo(draft)
+        // use qsTr for strings you want to translate
+        var title = qsTr("New Todo")
+
+        // this logic helper function creates a todo
+        logic.addTodo(title)
       }
     }
   }
 
-  // show todos of data model
-  model: dataModel.draftTodos.concat(dataModel.todos)
-  delegate: SimpleRow {
-    text: modelData.title + (modelData.id < 0 ? " (Draft "+(-modelData.id)+")" : "")
-    style.backgroundColor: modelData.id > 0 ? Theme.listItem.backgroundColor : Theme.secondaryBackgroundColor
+  // when a todo is added, we open the detail page for it
+  Connections {
+    target: dataModel
+    onTodoStored: {
+      page.navigationStack.popAllExceptFirstAndPush(detailPageComponent, { todoId: todo.id })
+    }
+  }
 
-    // push detail page when selected
-    onSelected: page.navigationStack.push(detailPageComponent, { todoId: modelData.id })
+  // JsonListModel
+  // A ViewModel for JSON data that offers best integration and performance with list views
+  JsonListModel {
+    id: listModel
+    source: dataModel.todos // show todos from data model
+    keyField: "id"
+    fields: ["id", "title", "completed"]
+  }
+
+  // show sorted/filterd todos of data model
+  AppListView {
+    id: listView
+    anchors.fill: parent
+
+    // the model specifies the data for the list view
+    model: listModel
+
+    // the delegate is the template item for each entry of the list
+    delegate: SimpleRow {
+      text: viewHelper.formatTitle(model)
+
+      // push detail page when selected, pass chosen todo id
+      onSelected: page.navigationStack.popAllExceptFirstAndPush(detailPageComponent, { todoId: model.id })
+    }
   }
 
   // component for creating detail pages

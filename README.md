@@ -1,7 +1,7 @@
 ![ScreenShot](http://v-play.net/support/vplay-logo.png)
 
-# ModelViewSeparation Example
-This example showcases model and view separation combined with REST API access and offline caching.
+# Basic App Example
+A project with all core elements set up. It includes app navigation, basic controls, REST API access and offline caching.
 
 Description
 -----------
